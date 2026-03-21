@@ -1,27 +1,31 @@
 name: Deploy (production)
 
 on:
-    push:
-        branches: ["main"]
+  push:
+    branches: ["main"]
 
 jobs:
-    deploy:
-        permissions: {}
-        runs-on: self-hosted
-        environment: production
+  deploy:
+    permissions: {}
+    runs-on: [self-hosted, linux, x64]
+    environment: production
 
-        steps:
-            - name: Deploy to Proxmox container
-              shell: bash
-              run: |
-                  set -euo pipefail
+    steps:
+      - name: Deploy to Fluxer production container
+        shell: bash
+        run: |
+          set -euo pipefail
 
-                  mkdir -p ~/.ssh
-                  chmod 700 ~/.ssh
+          test -n "${{ secrets.PROD_SSH_KEY }}"
+          test -n "${{ secrets.PROD_USER }}"
+          test -n "${{ secrets.PROD_HOST }}"
 
-                  echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/id_ed25519
-                  chmod 600 ~/.ssh/id_ed25519
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
 
-                  ssh -o StrictHostKeyChecking=no \
-                      "${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}" \
-                      "/home/bot/deploy.sh"
+          printf '%s' "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+          ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null
+
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no "${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}" "/home/bot/deploy.sh"
