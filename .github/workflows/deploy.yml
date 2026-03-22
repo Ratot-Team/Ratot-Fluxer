@@ -7,7 +7,7 @@ on:
 jobs:
   deploy:
     permissions: {}
-    runs-on: [self-hosted, linux, x64]
+    runs-on: self-hosted
     environment: production
 
     steps:
@@ -16,16 +16,10 @@ jobs:
         run: |
           set -euo pipefail
 
-          test -n "${{ secrets.PROD_SSH_KEY }}"
-          test -n "${{ secrets.PROD_USER }}"
-          test -n "${{ secrets.PROD_HOST }}"
-
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
 
-          printf '%s' "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/id_ed25519
+          echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-          ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null
-
-          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no "${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}" "/home/bot/deploy.sh"
+          ssh -o StrictHostKeyChecking=no "${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}" "/home/bot/deploy.sh"
