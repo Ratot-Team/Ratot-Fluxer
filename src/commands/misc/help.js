@@ -11,26 +11,51 @@ export default {
 	description:
 		"The bot sends a menu with some information about the bot and some commands to help.",
 	aliases: [],
-    usage: "help",
+	usage: "help",
 
 	async execute({ api, message }) {
 		try {
 			const currentYear = new Date().getFullYear();
 			const botName = process.env.RATOT_CURRENT_NAME || "Ratot";
 			const prefix = await getContextPrefix(api, message);
-			const sourceCodeUrl = "https://github.com/Ratot-Team/Ratot-Fluxer";
-
-			const responseText =
-				`# ${botName} Help Menu\n\n` +
-				`## Commands List\n` +
-				`${prefix}help-commands\n\n` +
-				`## See my code on GitHub!\n` +
-				`${sourceCodeUrl}\n\n` +
-				`Copyright © ${currentYear} by Captain Ratax`;
 
 			await api.channels.createMessage(message.channel_id, {
-				content: responseText,
 				message_reference: { message_id: message.id },
+				embeds: [
+					{
+						title: `${process.env.RATOT_CURRENT_NAME} Help Menu`,
+						color: 0x66ccff,
+						fields: [
+							{
+								name: "Commands List",
+								value: `${prefix}help-commands`,
+								inline: false,
+							},
+							{
+								name: "\u200B",
+								value: "\u200B",
+								inline: false,
+							},
+							{
+								name: "See my code on GitHub!",
+								value: "https://github.com/Ratot-Team/Ratot",
+								inline: false,
+							},
+						],
+						timestamp: new Date().toISOString(),
+						author: {
+							name: process.env.RATOT_CURRENT_NAME,
+							icon_url:
+								"https://fluxerusercontent.com/avatars/1483578500003804314/06595fca.webp?size=512",
+							url: "https://github.com/Ratot-Team/Ratot-Fluxer",
+						},
+						footer: {
+							text: `Copyright © ${currentYear} by Captain Ratax`,
+							icon_url:
+								"https://fluxerusercontent.com/avatars/1483578500003804314/06595fca.webp?size=512",
+						},
+					},
+				],
 			});
 		} catch (error) {
 			if (errorLogger?.error) {

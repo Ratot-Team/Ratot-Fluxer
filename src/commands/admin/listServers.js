@@ -6,6 +6,10 @@
 import { errorLogger } from "../../utils/logger.js";
 import { getContextPrefix } from "../../utils/prefixUtils.js";
 
+const BOT_ICON_URL =
+	"https://fluxerusercontent.com/avatars/1483578500003804314/06595fca.webp?size=512";
+const SOURCE_URL = "https://github.com/Ratot-Team/Ratot-Fluxer";
+
 export default {
 	name: "list-servers",
 	description: "Lists all the servers the bot is on.",
@@ -53,24 +57,35 @@ export default {
 
 			const prefix = await getContextPrefix(api, message);
 
-			let responseText =
-				`# Servers List\n\n` +
-				`${lines.join("\n\n")}\n\n` +
-				`Page ${currentPage}/${totalPages}`;
+			let description = lines.join("\n\n");
 
 			if (currentPage > 1) {
-				responseText += `\nPrevious page: \`${prefix}list-servers ${currentPage - 1}\``;
+				description += `\n\nPrevious page: \`${prefix}list-servers ${currentPage - 1}\``;
 			}
 
 			if (currentPage < totalPages) {
-				responseText += `\nNext page: \`${prefix}list-servers ${currentPage + 1}\``;
+				description += `\nNext page: \`${prefix}list-servers ${currentPage + 1}\``;
 			}
 
-			responseText += `\nTotal servers: ${guilds.length}`;
-
 			await api.channels.createMessage(message.channel_id, {
-				content: responseText,
 				message_reference: { message_id: message.id },
+				embeds: [
+					{
+						title: "Servers List",
+						description,
+						color: 0x66ccff,
+						timestamp: new Date().toISOString(),
+						author: {
+							name: process.env.RATOT_CURRENT_NAME || "Ratot",
+							icon_url: BOT_ICON_URL,
+							url: SOURCE_URL,
+						},
+						footer: {
+							text: `Copyright © ${new Date().getFullYear()} by Captain Ratax • Page ${currentPage} of ${totalPages} • Total servers: ${guilds.length}`,
+							icon_url: BOT_ICON_URL,
+						},
+					},
+				],
 			});
 		} catch (error) {
 			if (errorLogger?.error) {
