@@ -8,6 +8,9 @@ import { canAccessAdminCommand } from "../../utils/commandAccessUtils.js";
 import { getContextPrefix } from "../../utils/prefixUtils.js";
 
 const SAFE_PAGE_CHAR_LIMIT = 1700;
+const BOT_ICON_URL =
+	"https://fluxerusercontent.com/avatars/1483578500003804314/06595fca.webp?size=512";
+const SOURCE_URL = "https://github.com/Ratot-Team/Ratot-Fluxer";
 
 function parsePositivePageNumber(value) {
 	const parsed = Number.parseInt(value, 10);
@@ -19,13 +22,10 @@ function parsePositivePageNumber(value) {
 	return parsed;
 }
 
-function buildCommandPages({ botName, prefix, commands, charLimit }) {
+function buildCommandPages({ prefix, commands, charLimit }) {
 	const pages = [];
 	let currentEntries = [];
 	let currentLength = 0;
-
-	const baseHeader = `# ${botName} Commands List\n\n`;
-	const baseFooter = `\n\nCopyright © ${new Date().getFullYear()} by Captain Ratax`;
 
 	for (const command of commands) {
 		const usage = command.usage
@@ -36,13 +36,7 @@ function buildCommandPages({ botName, prefix, commands, charLimit }) {
 		const entry = `**${usage}**\n${description}`;
 
 		const separatorLength = currentEntries.length > 0 ? 2 : 0;
-		const predictedLength =
-			baseHeader.length +
-			currentLength +
-			separatorLength +
-			entry.length +
-			baseFooter.length +
-			40;
+		const predictedLength = currentLength + separatorLength + entry.length;
 
 		if (currentEntries.length > 0 && predictedLength > charLimit) {
 			pages.push(currentEntries);
@@ -105,15 +99,12 @@ export default {
 			}
 
 			const pages = buildCommandPages({
-				botName,
 				prefix,
 				commands: uniqueCommands,
 				charLimit: SAFE_PAGE_CHAR_LIMIT,
 			});
 
 			const totalPages = pages.length;
-			const currentPage =
-				requestedPage > totalPages ? totalPages : requestedPage;
 
 			if (requestedPage > totalPages) {
 				await api.channels.createMessage(message.channel_id, {
@@ -123,26 +114,38 @@ export default {
 				return;
 			}
 
+			const currentPage = requestedPage;
 			const pageEntries = pages[currentPage - 1];
 
-			let responseText =
-				`# ${botName} Commands List\n\n` +
-				`${pageEntries.join("\n\n")}\n\n` +
-				`Page ${currentPage}/${totalPages}`;
+			let description = pageEntries.join("\n\n");
 
 			if (currentPage > 1) {
-				responseText += `\nPrevious page: \`${prefix}help-commands ${currentPage - 1}\``;
+				description += `\n\nPrevious page: \`${prefix}help-commands ${currentPage - 1}\``;
 			}
 
 			if (currentPage < totalPages) {
-				responseText += `\nNext page: \`${prefix}help-commands ${currentPage + 1}\``;
+				description += `\nNext page: \`${prefix}help-commands ${currentPage + 1}\``;
 			}
 
-			responseText += `\n\nCopyright © ${currentYear} by Captain Ratax`;
-
 			await api.channels.createMessage(message.channel_id, {
-				content: responseText,
 				message_reference: { message_id: message.id },
+				embeds: [
+					{
+						title: `${botName} Commands List`,
+						description,
+						color: 0x66ccff,
+						timestamp: new Date().toISOString(),
+						author: {
+							name: botName,
+							icon_url: BOT_ICON_URL,
+							url: SOURCE_URL,
+						},
+						footer: {
+							text: `Copyright © ${currentYear} by Captain Ratax • Page ${currentPage} of ${totalPages}`,
+							icon_url: BOT_ICON_URL,
+						},
+					},
+				],
 			});
 		} catch (error) {
 			if (errorLogger?.error) {

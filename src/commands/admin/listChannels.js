@@ -6,6 +6,10 @@
 import { errorLogger } from "../../utils/logger.js";
 import { getContextPrefix } from "../../utils/prefixUtils.js";
 
+const BOT_ICON_URL =
+	"https://fluxerusercontent.com/avatars/1483578500003804314/06595fca.webp?size=512";
+const SOURCE_URL = "https://github.com/Ratot-Team/Ratot-Fluxer";
+
 function parsePositivePageNumber(value) {
 	const parsed = Number.parseInt(value, 10);
 
@@ -168,34 +172,46 @@ export default {
 
 			const prefix = await getContextPrefix(api, message);
 
-			let responseText =
-				`# Channels List\n\n` +
-				`Server: **${targetGuild?.name || "Unknown Server"}**\n` +
-				`Server ID: \`${targetGuildId}\`\n\n` +
-				`${lines.join("\n\n")}\n\n` +
-				`Page ${currentPage}/${totalPages}`;
+			let description =
+				`**Server:** ${targetGuild?.name || "Unknown Server"}\n` +
+				`**Server ID:** \`${targetGuildId}\`\n\n` +
+				`${lines.join("\n\n")}`;
 
 			if (currentPage > 1) {
 				if (guildFromFirstArg) {
-					responseText += `\nPrevious page: \`${prefix}list-channels ${targetGuildId} ${currentPage - 1}\``;
+					description += `\n\nPrevious page: \`${prefix}list-channels ${targetGuildId} ${currentPage - 1}\``;
 				} else {
-					responseText += `\nPrevious page: \`${prefix}list-channels ${currentPage - 1}\``;
+					description += `\n\nPrevious page: \`${prefix}list-channels ${currentPage - 1}\``;
 				}
 			}
 
 			if (currentPage < totalPages) {
 				if (guildFromFirstArg) {
-					responseText += `\nNext page: \`${prefix}list-channels ${targetGuildId} ${currentPage + 1}\``;
+					description += `\nNext page: \`${prefix}list-channels ${targetGuildId} ${currentPage + 1}\``;
 				} else {
-					responseText += `\nNext page: \`${prefix}list-channels ${currentPage + 1}\``;
+					description += `\nNext page: \`${prefix}list-channels ${currentPage + 1}\``;
 				}
 			}
 
-			responseText += `\nTotal channels: ${channels.length}`;
-
 			await api.channels.createMessage(message.channel_id, {
-				content: responseText,
 				message_reference: { message_id: message.id },
+				embeds: [
+					{
+						title: "Channels List",
+						description,
+						color: 0x66ccff,
+						timestamp: new Date().toISOString(),
+						author: {
+							name: process.env.RATOT_CURRENT_NAME || "Ratot",
+							icon_url: BOT_ICON_URL,
+							url: SOURCE_URL,
+						},
+						footer: {
+							text: `Copyright © ${new Date().getFullYear()} by Captain Ratax • Page ${currentPage} of ${totalPages} • Total channels: ${channels.length}`,
+							icon_url: BOT_ICON_URL,
+						},
+					},
+				],
 			});
 		} catch (error) {
 			if (errorLogger?.error) {
