@@ -14,13 +14,18 @@ import { WebSocketManager } from "@discordjs/ws";
 import connectMongo from "./src/utils/connectMongo.js";
 import loadCommands from "./src/handlers/commandHandler.js";
 import loadEvents from "./src/handlers/eventHandler.js";
-import apiRouter from "./src/api/api.js";
-import { errorLogger, infoLogger, warnLogger } from "./src/utils/logger.js";
+import createApiRouter from "./src/api/api.js";
+import { errorLogger, infoLogger } from "./src/utils/logger.js";
 
 dotenv.config();
 
 const token = process.env.RATOT_CURRENT_TOKEN;
 const port = Number(process.env.PORT) || 3000;
+const botRuntime = {
+	client: null,
+	gateway: null,
+	startedAt: null,
+};
 
 if (!token) {
 	throw new Error("Missing RATOT_CURRENT_TOKEN");
@@ -46,7 +51,11 @@ async function startFluxerBot() {
 	await loadCommands(client);
 	await loadEvents(client);
 
-	gateway.connect();
+	botRuntime.client = client;
+	botRuntime.gateway = gateway;
+	botRuntime.startedAt = Date.now();
+
+	await gateway.connect();
 
 	infoLogger.info("Fluxer bot started successfully.");
 
@@ -63,7 +72,12 @@ function startApiServer() {
 		}),
 	);
 
-	app.use("/", apiRouter);
+	app.use(
+		"/",
+		createApiRouter({
+			getBotRuntime: () => botRuntime,
+		}),
+	);
 
 	app.use((req, res) => {
 		res.status(404).json({
